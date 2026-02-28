@@ -1,0 +1,84 @@
+# Example Docker Compose for testing with Laravel
+#
+# Usage:
+#   1. Place this file as docker-compose.yml in your Laravel project root
+#   2. Adjust environment variables as needed
+#   3. Run: docker compose up -d
+#
+# The Laravel application code is mounted read-only into /app.
+# Writable paths (/app/storage, /app/bootstrap/cache) are separate volumes.
+
+services:
+  app:
+    image: ghcr.io/hauptsmoor/laravel-fphp:latest
+    read_only: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app:ro
+      - app_storage:/app/storage
+      - app_cache:/app/bootstrap/cache
+      - valkey_data:/data/valkey
+    tmpfs:
+      - /tmp:size=64M
+      - /var/run:size=1M
+      - /data/caddy:size=1M
+      - /config/caddy:size=1M
+      - /etc/supervisor/conf.d:size=1M
+    environment:
+      # --- Service activation (set to "true" to enable) ---
+      SCHEDULER: "true"
+      QUEUE: "true"
+      VALKEY: "true"
+      # HORIZON: "true"        # Use instead of QUEUE if using Horizon
+      # REVERB: "true"         # Enable for WebSocket broadcasting
+      # PULSE_CHECK: "true"    # Enable for Pulse monitoring
+
+      # --- Startup hooks ---
+      AUTO_MIGRATE: "true"
+      # SKIP_OPTIMIZE: "true"  # Set to skip php artisan optimize on boot
+
+      # --- Tuning ---
+      QUEUE_WORKERS: "2"
+      # HTTP_PORT: "8080"
+      # REVERB_PORT: "6001"
+
+      # --- Laravel environment ---
+      APP_KEY: "base64:CHANGE_ME_GENERATE_WITH_PHP_ARTISAN_KEY_GENERATE"
+      APP_ENV: "local"
+      APP_DEBUG: "true"
+      DB_CONNECTION: "mariadb"
+      DB_HOST: "db"
+      DB_PORT: "3306"
+      DB_DATABASE: "laravel"
+      DB_USERNAME: "laravel"
+      DB_PASSWORD: "secret"
+      CACHE_STORE: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_CONNECTION: "redis"
+      REDIS_HOST: "127.0.0.1"
+      REDIS_PORT: "6379"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: laravel
+      MARIADB_USER: laravel
+      MARIADB_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
+  app_storage:
+  app_cache:
+  valkey_data:

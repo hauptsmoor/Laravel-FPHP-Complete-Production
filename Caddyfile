@@ -1,0 +1,13 @@
+{
+	auto_https off
+	http_port {$HTTP_PORT:8080}
+	order php_server before file_server
+}
+
+:{$HTTP_PORT:8080} {
+	root * /app/public
+
+	encode gzip zstd
+
+	php_server
+}
