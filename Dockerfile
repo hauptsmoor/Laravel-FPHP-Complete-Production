@@ -90,7 +90,8 @@ RUN mkdir -p \
     /etc/supervisor/available \
     /etc/supervisor/conf.d \
     /etc/valkey \
-    && chown valkey:valkey /data/valkey
+    && chown valkey:valkey /data/valkey \
+    && ln -s /app/storage/app/public /app/public/storage
 
 # Copy configuration files
 COPY Caddyfile /etc/caddy/Caddyfile

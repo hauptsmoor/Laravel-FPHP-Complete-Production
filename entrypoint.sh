@@ -77,9 +77,6 @@ if [ -f /app/artisan ]; then
         echo "[entrypoint] Optimizing application..."
         php /app/artisan optimize
     fi
-
-    # Ensure storage link exists (may fail on read-only /app/public, which is fine)
-    php /app/artisan storage:link 2>/dev/null || true
 fi
 
 echo "[entrypoint] Starting supervisord..."
